@@ -487,9 +487,47 @@ class ShotTypeClassifier:
         try:
             if hasattr(self.learn, 'predict') and callable(self.learn.predict):
                 pred_class, pred_idx, probs = self.learn.predict(img)
+                
+                # Handle the case where FastAI returns weird results
+                # Check if pred_idx is actually probabilities (tensor with multiple values)
+                if isinstance(pred_idx, torch.Tensor) and pred_idx.dim() > 0 and len(pred_idx) > 1:
+                    # pred_idx is actually the raw probabilities, use it to get the real prediction
+                    predicted_class_idx = pred_idx.argmax().item()
+                    if hasattr(self.learn.dls, 'vocab'):
+                        vocab = list(self.learn.dls.vocab)
+                        if 0 <= predicted_class_idx < len(vocab):
+                            pred_class_str = vocab[predicted_class_idx]
+                        else:
+                            pred_class_str = f"unknown_{predicted_class_idx}"
+                    else:
+                        pred_class_str = f"class_{predicted_class_idx}"
+                    
+                    # Use pred_idx as probs (apply softmax to normalize)
+                    probs = torch.softmax(pred_idx, dim=0)
+                else:
+                    # Normal case - convert pred_class to clean string
+                    pred_class_str = str(pred_class).strip()
+                    
+                    # If the string representation looks like an array, it's corrupted
+                    if pred_class_str.startswith('[') and pred_class_str.endswith(']'):
+                        # Fall back to using pred_idx
+                        if isinstance(pred_idx, torch.Tensor):
+                            predicted_class_idx = pred_idx.item() if pred_idx.dim() == 0 else pred_idx.argmax().item()
+                        else:
+                            predicted_class_idx = int(pred_idx)
+                            
+                        if hasattr(self.learn.dls, 'vocab'):
+                            vocab = list(self.learn.dls.vocab)
+                            if 0 <= predicted_class_idx < len(vocab):
+                                pred_class_str = vocab[predicted_class_idx]
+                            else:
+                                pred_class_str = f"unknown_{predicted_class_idx}"
+                        else:
+                            pred_class_str = f"class_{predicted_class_idx}"
+                
                 if return_probs:
-                    return str(pred_class), probs
-                return str(pred_class)
+                    return pred_class_str, probs
+                return pred_class_str
         except Exception:
             # Fall back to manual prediction if FastAI predict fails
             pass
