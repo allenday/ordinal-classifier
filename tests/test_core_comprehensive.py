@@ -29,7 +29,7 @@ class TestEarlyStoppingCallback:
     def test_init_default_parameters(self):
         """Test EarlyStoppingCallback initialization with defaults."""
         callback = EarlyStoppingCallback()
-        assert callback.monitor == 'valid_loss'
+        assert callback.monitor == 'valid_acc'
         assert callback.min_delta == 0.001
         assert callback.patience == 3
         assert callback.restore_best_weights is True

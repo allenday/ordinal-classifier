@@ -196,3 +196,5 @@ cython_debug/
 .venv
 .DS_Store
 tests/out/*
+data/*-full/*
+eval/

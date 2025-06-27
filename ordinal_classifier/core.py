@@ -18,7 +18,7 @@ from .transforms import get_transforms
 class EarlyStoppingCallback(Callback):
     """Simple and robust early stopping callback."""
     
-    def __init__(self, monitor='valid_loss', min_delta=0.001, patience=3, restore_best_weights=True):
+    def __init__(self, monitor='valid_acc', min_delta=0.001, patience=3, restore_best_weights=True):
         self.monitor = monitor
         self.min_delta = min_delta
         self.patience = patience
