@@ -82,6 +82,8 @@ def main():
               help='Enable early stopping to prevent overfitting')
 @click.option('--patience', default=3, help='Early stopping patience (epochs to wait)')
 @click.option('--min-delta', default=0.001, help='Minimum improvement threshold for early stopping')
+@click.option('--monitor', default='valid_acc', type=click.Choice(['valid_acc', 'valid_loss']),
+              help='Metric to monitor for early stopping (default: valid_acc)')
 @click.option('--device', default='auto', type=click.Choice(['auto', 'cpu', 'cuda', 'mps']),
               help='Device to use for training (auto detects best available)')
 def train(
@@ -100,6 +102,7 @@ def train(
     early_stopping: bool,
     patience: int,
     min_delta: float,
+    monitor: str,
     device: str
 ):
     """Train a shot type classifier.
@@ -137,7 +140,7 @@ def train(
         click.echo("📊 Using standard classification")
     
     if early_stopping:
-        click.echo(f"🛑 Early stopping enabled (patience: {patience}, min_delta: {min_delta})")
+        click.echo(f"🛑 Early stopping enabled (monitor: {monitor}, patience: {patience}, min_delta: {min_delta})")
     else:
         click.echo("⚠️  Early stopping disabled")
     
@@ -164,7 +167,8 @@ def train(
                 scheduler=scheduler,
                 early_stopping=early_stopping,
                 patience=patience,
-                min_delta=min_delta
+                min_delta=min_delta,
+                monitor=monitor
             )
         else:
             classifier.train(
@@ -179,7 +183,8 @@ def train(
                 arch=arch_func,
                 early_stopping=early_stopping,
                 patience=patience,
-                min_delta=min_delta
+                min_delta=min_delta,
+                monitor=monitor
             )
         
         # Move model to selected device after training

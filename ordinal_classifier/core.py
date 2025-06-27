@@ -710,6 +710,7 @@ class ShotTypeClassifier:
         early_stopping: bool = True,
         patience: int = 3,
         min_delta: float = 0.001,
+        monitor: str = 'valid_acc',
         valid_path: Optional[Union[str, Path]] = None
     ) -> None:
         """Train the model.
@@ -751,7 +752,7 @@ class ShotTypeClassifier:
         callbacks = []
         if early_stopping:
             early_stop_cb = EarlyStoppingCallback(
-                monitor='valid_loss',  # Use valid_loss instead of accuracy for reliability
+                monitor=monitor,
                 patience=patience, 
                 min_delta=min_delta,
                 restore_best_weights=True
@@ -796,7 +797,8 @@ class ShotTypeClassifier:
         scheduler: str = "sgdr",
         early_stopping: bool = True,
         patience: int = 3,
-        min_delta: float = 0.001
+        min_delta: float = 0.001,
+        monitor: str = 'valid_acc'
     ) -> None:
         """
         Train the model with ordinal-aware label smoothing.
@@ -869,7 +871,7 @@ class ShotTypeClassifier:
         callbacks = []
         if early_stopping:
             early_stop_cb = EarlyStoppingCallback(
-                monitor='valid_loss',  # Use valid_loss instead of accuracy for reliability
+                monitor=monitor,
                 patience=patience, 
                 min_delta=min_delta,
                 restore_best_weights=True
