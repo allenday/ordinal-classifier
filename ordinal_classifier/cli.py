@@ -745,7 +745,9 @@ def find_uncertain(image_dir: Path, model_path: Optional[Path], model_type: str,
               help='Random seed for reproducible splits (default: 42)')
 @click.option('--skip-rename', is_flag=True,
               help='Skip MD5 renaming step')
-def rebalance(data_dir: Path, valid_ratio: float, seed: int, skip_rename: bool):
+@click.option('--check-duplicates/--no-check-duplicates', default=True,
+              help='Check for duplicate files across train/valid splits (default: True)')
+def rebalance(data_dir: Path, valid_ratio: float, seed: int, skip_rename: bool, check_duplicates: bool):
     """Rebalance dataset with MD5 renaming and deduplication.
     
     DATA_DIR should contain 'train' and 'valid' subdirectories with images
@@ -772,7 +774,7 @@ def rebalance(data_dir: Path, valid_ratio: float, seed: int, skip_rename: bool):
             click.echo("⏭️  Skipping MD5 renaming")
         
         # Step 2: Rebalance the dataset
-        rebalance_dataset(data_dir, valid_ratio, seed)
+        rebalance_dataset(data_dir, valid_ratio, seed, check_duplicates)
         
         click.echo("\n🎉 Dataset rebalancing completed successfully!")
         

@@ -89,9 +89,12 @@ class ModelEvaluator:
                               if f.suffix.lower() in ['.jpg', '.jpeg', '.png']]
             
             print(f"Processing {len(image_files)} images from {shot_dir.name}...")
+            print(f"Image files found: {[f.name for f in image_files[:5]]}{'...' if len(image_files) > 5 else ''}")
             
+            processed_count = 0
             for img_file in image_files:
                 try:
+                    print(f"Processing: {img_file}")
                     # Get prediction
                     pred_class, probs = self.classifier.predict_single(
                         img_file, return_probs=True
@@ -101,10 +104,13 @@ class ModelEvaluator:
                     pred_labels.append(pred_class)
                     image_paths.append(str(img_file.relative_to(data_dir)))
                     confidences.append(float(probs.max()))
+                    processed_count += 1
                     
                 except Exception as e:
                     print(f"Error processing {img_file}: {e}")
                     continue
+            
+            print(f"Successfully processed {processed_count}/{len(image_files)} images from {shot_dir.name}")
         
         if len(true_labels) == 0:
             raise ValueError("No valid images found for evaluation")

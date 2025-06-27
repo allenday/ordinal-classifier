@@ -126,12 +126,75 @@ def count_files_by_class(data_dir):
     return dict(counts)
 
 
-def rebalance_dataset(data_dir, target_valid_ratio=0.2, seed=42):
+def check_cross_split_duplicates(data_dir):
+    """Check for duplicate files across train/valid splits."""
+    data_dir = Path(data_dir)
+    train_hashes = {}
+    valid_hashes = {}
+    duplicates = []
+    
+    print("🔍 Checking for duplicates across train/valid splits...")
+    
+    # Collect hashes from train split
+    train_path = data_dir / 'train'
+    if train_path.exists():
+        for class_dir in train_path.iterdir():
+            if not class_dir.is_dir():
+                continue
+            for file_path in class_dir.iterdir():
+                if is_image_file(file_path):
+                    try:
+                        file_hash = get_md5_hash(file_path)
+                        train_hashes[file_hash] = file_path
+                    except Exception as e:
+                        print(f"  ! Could not hash {file_path}: {e}")
+    
+    # Collect hashes from valid split and check for duplicates
+    valid_path = data_dir / 'valid'
+    if valid_path.exists():
+        for class_dir in valid_path.iterdir():
+            if not class_dir.is_dir():
+                continue
+            for file_path in class_dir.iterdir():
+                if is_image_file(file_path):
+                    try:
+                        file_hash = get_md5_hash(file_path)
+                        if file_hash in train_hashes:
+                            duplicates.append({
+                                'hash': file_hash,
+                                'train_file': train_hashes[file_hash],
+                                'valid_file': file_path
+                            })
+                        valid_hashes[file_hash] = file_path
+                    except Exception as e:
+                        print(f"  ! Could not hash {file_path}: {e}")
+    
+    if duplicates:
+        print(f"\n⚠️  Found {len(duplicates)} duplicate files across train/valid splits:")
+        for dup in duplicates:
+            train_rel = dup['train_file'].relative_to(data_dir)
+            valid_rel = dup['valid_file'].relative_to(data_dir)
+            print(f"  Hash {dup['hash'][:8]}... appears in both:")
+            print(f"    Train: {train_rel}")
+            print(f"    Valid: {valid_rel}")
+    else:
+        print("✅ No duplicate files found across train/valid splits")
+    
+    return duplicates
+
+
+def rebalance_dataset(data_dir, target_valid_ratio=0.2, seed=42, check_duplicates=True):
     """Rebalance dataset to achieve target train/validation split."""
     data_dir = Path(data_dir)
     random.seed(seed)
     
-    print(f"🎯 Rebalancing dataset to {int((1-target_valid_ratio)*100)}/{int(target_valid_ratio*100)} train/valid split...")
+    if check_duplicates:
+        duplicates = check_cross_split_duplicates(data_dir)
+        if duplicates:
+            print(f"\n⚠️  Warning: Found {len(duplicates)} duplicate files across splits.")
+            print("Consider removing duplicates before rebalancing to avoid data leakage.")
+    
+    print(f"\n🎯 Rebalancing dataset to {int((1-target_valid_ratio)*100)}/{int(target_valid_ratio*100)} train/valid split...")
     
     # Get current file counts
     current_counts = count_files_by_class(data_dir)
